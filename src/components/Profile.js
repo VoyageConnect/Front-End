@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Profile() {
   const [nickname, setNickname] = useState("");
@@ -6,11 +8,37 @@ function Profile() {
   const [mbti, setMbti] = useState("");
   const [gender, setGender] = useState("");
   const [intro, setIntro] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // 프로필 정보 저장 API 호출 (필요 시 추가)
-    alert("프로필 저장 완료");
+    try {
+      const token = localStorage.getItem("token"); // JWT 토큰 가져오기
+      if (!token) {
+        throw new Error("User not logged in");
+      }
+
+      // 백엔드로 프로필 등록 API 호출
+      const response = await axios.post(
+        "http://localhost:8080/api/users/me/profile",
+        { nickname, age, mbti, gender, introduction: intro },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // JWT 토큰을 헤더에 포함
+          },
+        }
+      );
+      console.log("Profile saved successfully:", response.data);
+      alert("프로필 저장 완료");
+
+      // 프로필 등록 후 설문조사 페이지로 이동
+      if (response.data.nextStep === "survey") {
+        navigate("/survey");
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("프로필 저장 중 오류 발생");
+    }
   };
 
   return (
@@ -34,7 +62,6 @@ function Profile() {
           <option value="INTJ">INTJ</option>
           <option value="ENTJ">ENTJ</option>
           <option value="INFJ">INFJ</option>
-          {/* 추가 MBTI 옵션 */}
         </select>
         <select value={gender} onChange={(e) => setGender(e.target.value)}>
           <option value="">Select Gender</option>

@@ -11,7 +11,7 @@ const LoginPage = () => {
   const handleKakaoLogin = () => {
     // 로그인 버튼 클릭 시 Kakao 인증 페이지로 이동
     window.Kakao.Auth.authorize({
-      redirectUri: "http://localhost:8080/callback", // 백엔드와 동일한 Redirect URI
+      redirectUri: "http://localhost:3000/callback", // 프론트엔드의 Redirect URI
     });
   };
 
