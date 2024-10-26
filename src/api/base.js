@@ -6,7 +6,7 @@ import axios from "axios";
  * 궁금하시다면 구글에 axios interceptor 검색해보세요.
  */
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://3.34.182.245:8080",
 });
 
 axiosInstance.interceptors.request.use(

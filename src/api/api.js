@@ -10,7 +10,7 @@ export const getKakaoCodeFromUrl = () => {
 export const getKakaoLoginUrl = async () => {
   try {
     // 백엔드의 /api/login 엔드포인트로 요청을 보냄
-    const response = await axios.get("http://localhost:8080/api/login");
+    const response = await axios.get("http://3.34.182.245:8080/api/login");
     return response.data.url; // 백엔드에서 반환한 Kakao 로그인 URL 반환
   } catch (error) {
     console.error("Error fetching Kakao login URL:", error);

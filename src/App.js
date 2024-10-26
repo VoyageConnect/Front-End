@@ -4,7 +4,7 @@ import Login from "./components/Login";
 import Profile from "./components/Profile";
 import Home from "./components/Home";
 import CallbackPage from "./components/CallbackPage";
-import Survey from "./components/Survey";
+import Survey from "./components/survey";
 function App() {
   return (
     <Routes>

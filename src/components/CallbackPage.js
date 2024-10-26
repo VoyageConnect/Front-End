@@ -12,7 +12,7 @@ const CallbackPage = () => {
 
         // 백엔드로 인가 코드를 전달하여 JWT 토큰 및 nextStep 값을 받아옴
         const response = await axios.get(
-          `http://localhost:8080/api/auth/kakao/callback?code=${code}`
+          `http://3.34.182.245:8080/api/auth/kakao/callback?code=${code}`
         );
         console.log("Response received from backend:", response.data);
 
