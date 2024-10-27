@@ -1,9 +1,9 @@
-import axios from "./base";
+import axiosInstance from "./base";
 
 // 위치 정보를 보내고 추천 장소 정보를 가져오는 함수
 export const getRecommendedLocations = async (userId, latitude, longitude) => {
   try {
-    const response = await axios.post("/api/ai/process-location", {
+    const response = await axiosInstance.post("/api/ai/process-location", {
       user_id: userId,
       latitude: latitude,
       longitude: longitude,
@@ -19,7 +19,7 @@ export const getRecommendedLocations = async (userId, latitude, longitude) => {
         longitude: location.longitude,
       }));
     } else {
-      throw new Error("Invalid response format");
+      throw new Error("Unexpected response format from server");
     }
   } catch (error) {
     console.error("Error fetching recommended locations:", error);
