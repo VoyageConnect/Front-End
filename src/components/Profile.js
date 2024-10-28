@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Profile() {
   const navigate = useNavigate();
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
   const [profile, setProfile] = useState({
     age: 0,
@@ -18,9 +19,24 @@ function Profile() {
   const isDisabled =
     !profile.age || !profile.mbti || !profile.gender || !profile.introduction;
 
-  const fetchProfile = async () => {
+  // 토큰 업데이트 감지
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+      console.log("Updated Access Token:", newToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // useCallback으로 fetchProfile 함수 정의
+  const fetchProfile = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token"); // 저장된 액세스 토큰 가져오기
       console.log("Access Token:", token);
       if (!token) {
         throw new Error("No access token found. Make sure you are logged in.");
@@ -38,16 +54,15 @@ function Profile() {
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
-  };
+  }, [token]); // token이 변경될 때마다 fetchProfile 재정의
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]); // fetchProfile을 의존성 배열에 추가
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("No access token found. Make sure you are logged in.");
       }
