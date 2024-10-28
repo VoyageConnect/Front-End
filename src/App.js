@@ -7,6 +7,8 @@ import CallbackPage from "./components/CallbackPage";
 import Survey from "./components/Survey";
 import RecTab from "./components/RecTab";
 
+console.log(process.env.REACT_APP_API_URL); // 올바르게 로딩되었는지 확인
+
 function App() {
   return (
     <Routes>
