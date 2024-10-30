@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import { getRecommendedLocations } from "../api/recTab";
-import L from "leaflet";
+import {
+  GoogleMap,
+  LoadScript,
+  Marker,
+  InfoWindow,
+} from "@react-google-maps/api";
+import { getRecommendedLocations, parseJwt } from "../api/recTab";
 
 const RecTab = () => {
   const [recommendations, setRecommendations] = useState([]);
@@ -10,6 +13,7 @@ const RecTab = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
     // 사용자의 실시간 위치를 가져오기
@@ -45,7 +49,9 @@ const RecTab = () => {
         setLoadingRecommendations(true);
         setError("");
         try {
-          const userId = "defaultUser"; // 고정된 userId 사용
+          const token = localStorage.getItem("jwtToken"); // 저장된 토큰 가져오기
+          const decodedPayload = parseJwt(token);
+          const userId = decodedPayload ? decodedPayload.userId : "defaultUser"; // JWT payload에서 userId 추출
 
           // 추천 장소 API 호출
           const results = await getRecommendedLocations(
@@ -70,13 +76,6 @@ const RecTab = () => {
     fetchRecommendations();
   }, [userLocation]);
 
-  const defaultIcon = new L.Icon({
-    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-  });
-
   return (
     <div className="container">
       <h2>Recommended Locations</h2>
@@ -90,28 +89,61 @@ const RecTab = () => {
           {loadingRecommendations ? (
             <p>Loading recommended locations...</p>
           ) : (
-            <MapContainer
-              center={[userLocation.latitude, userLocation.longitude]}
-              zoom={13}
-              style={{ height: "500px", width: "100%" }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              {recommendations.map((location, index) => (
+            <LoadScript googleMapsApiKey="AIzaSyCNH8xLS_XvX0pVVSYtBNjCUxc50iwgb20">
+              <GoogleMap
+                mapContainerStyle={{ height: "500px", width: "100%" }}
+                center={{
+                  lat: userLocation.latitude,
+                  lng: userLocation.longitude,
+                }}
+                zoom={13}
+              >
+                {/* 사용자의 현재 위치에 마커 표시 */}
                 <Marker
-                  key={index}
-                  position={[location.latitude, location.longitude]}
-                  icon={defaultIcon}
-                >
-                  <Popup>
-                    <h4>{location.name}</h4>
-                    <p>{location.description}</p>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                  position={{
+                    lat: userLocation.latitude,
+                    lng: userLocation.longitude,
+                  }}
+                  icon={{
+                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png", // 사용자 위치를 나타내는 파란색 마커
+                  }}
+                  onClick={() =>
+                    setSelectedLocation({
+                      name: "Your Location",
+                      description: "You are here",
+                      latitude: userLocation.latitude,
+                      longitude: userLocation.longitude,
+                    })
+                  }
+                />
+
+                {recommendations.map((location, index) => (
+                  <Marker
+                    key={index}
+                    position={{
+                      lat: location.latitude,
+                      lng: location.longitude,
+                    }}
+                    onClick={() => setSelectedLocation(location)}
+                  />
+                ))}
+
+                {selectedLocation && (
+                  <InfoWindow
+                    position={{
+                      lat: selectedLocation.latitude,
+                      lng: selectedLocation.longitude,
+                    }}
+                    onCloseClick={() => setSelectedLocation(null)}
+                  >
+                    <div>
+                      <h4>{selectedLocation.name}</h4>
+                      <p>{selectedLocation.description}</p>
+                    </div>
+                  </InfoWindow>
+                )}
+              </GoogleMap>
+            </LoadScript>
           )}
         </>
       ) : (
