@@ -9,7 +9,7 @@ function Profile() {
   const [profile, setProfile] = useState({
     age: 0,
     gender: "",
-    profileImage: null,
+    profileImage: "",
     mbti: "",
     introduction: "",
     locationCountry: null,
@@ -67,20 +67,23 @@ function Profile() {
         throw new Error("No access token found. Make sure you are logged in.");
       }
 
-      const requestData = new FormData();
-      Object.keys(profile).forEach((key) => {
-        requestData.append(key, profile[key]);
-      });
+      // profileImage를 일반 string으로 설정 (예: 테스트용 이미지 URL 사용)
+      const profileData = {
+        ...profile,
+        profileImage: profile.profileImage || "https://example.com/image.jpg", // 테스트용 이미지 URL
+      };
 
       const response = await axios.post(
         "http://localhost:8080/api/users/me/profile",
-        requestData,
+        profileData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
+
       console.log("Profile saved successfully:", response.data);
       alert("프로필 저장 완료");
 
@@ -156,16 +159,12 @@ function Profile() {
           />
         </div>
         <div>
-          <label>프로필 이미지</label>
+          <label>프로필 이미지 URL</label>
           <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                onChangeProfile("profileImage", file);
-              }
-            }}
+            type="text"
+            value={profile.profileImage || ""}
+            onChange={(e) => onChangeProfile("profileImage", e.target.value)}
+            placeholder="Enter profile image URL"
           />
         </div>
         <button type="submit" disabled={isDisabled}>

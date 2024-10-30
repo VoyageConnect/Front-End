@@ -1,35 +1,19 @@
-import axiosInstance from "./base";
-
-// JWT 토큰을 파싱하는 함수
-export const parseJwt = (token) => {
-  try {
-    // 토큰을 '.'으로 분리하고, 두 번째 파트(payload)를 Base64 URL 디코딩
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-
-    return JSON.parse(jsonPayload); // payload를 JSON으로 파싱하여 반환
-  } catch (error) {
-    console.error("Invalid JWT token", error);
-    return null;
-  }
-};
+import axios from "axios";
 
 // 위치 정보를 보내고 추천 장소 정보를 가져오는 함수
 export const getRecommendedLocations = async (userId, latitude, longitude) => {
   try {
-    const response = await axiosInstance.post("/api/ai/process-location", {
+    // localhost:5000을 base URL로 사용하는 axios 인스턴스 생성
+    const axiosLocalInstance = axios.create({
+      baseURL: "http://localhost:5000",
+    });
+
+    const response = await axiosLocalInstance.post("/api/ai/process-location", {
       user_id: userId,
       latitude: latitude,
       longitude: longitude,
     });
 
-    // 응답 데이터에서 추천 장소 정보 추출
     if (response.data && response.data.results) {
       return response.data.results.map((location) => ({
         name: location.name || "Unknown",
