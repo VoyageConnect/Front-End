@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitSurvey } from "../api/survey";
 
@@ -22,6 +22,21 @@ function Survey() {
   const navigate = useNavigate();
   const [step, setStep] = useState("1-page");
   const [request, setRequest] = useState({});
+  const [token, setToken] = useState(localStorage.getItem("token")); // 토큰을 상태로 관리
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+      console.log("Updated Access Token:", newToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   const handleNext = async (step, data) => {
     const newRequest = { ...request, ...data };
@@ -29,10 +44,10 @@ function Survey() {
     setRequest(newRequest);
     if (step === "final") {
       try {
-        await submitSurvey(newRequest); // token 없이 submitSurvey 호출
+        await submitSurvey(newRequest, token);
         navigate("/home");
       } catch (error) {
-        console.error(error);
+        console.error("Error submitting survey:", error);
       }
     } else {
       setStep(step);
@@ -133,8 +148,8 @@ const surveyItemKeys = [
   { key: "food", name: "음식" },
   { key: "shopping", name: "쇼핑" },
   { key: "natureTourism", name: "자연관광" },
-  { key: "cultureTourism", name: "문화관광" },
-  { key: "historyTourism", name: "역사관광" },
+  { key: "culturalTourism", name: "문화관광" },
+  { key: "historicalTourism", name: "역사관광" },
   { key: "leisureSports", name: "레저/스포츠" },
 ];
 
@@ -149,7 +164,7 @@ const surveyItemOptions = [
 function Survey2Page({ onNext }) {
   const [selected, setSelected] = useState(
     surveyItemKeys.reduce((acc, item) => {
-      acc[item.key] = null;
+      acc[item.key] = 1; // 초기값을 1로 설정하여 모든 항목이 payload에 포함되도록 설정
       return acc;
     }, {})
   );

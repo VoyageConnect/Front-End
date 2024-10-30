@@ -15,12 +15,16 @@ export const submitSurvey = async (surveyData) => {
   };
 
   try {
-    const response = await axiosInstance.post("/api/survey", orderedData, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // JWT 토큰 추가
-      },
-    });
+    const response = await axiosInstance.post(
+      "/api/survey/submit",
+      orderedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // JWT 토큰 추가
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error(
