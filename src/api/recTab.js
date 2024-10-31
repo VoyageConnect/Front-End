@@ -8,7 +8,7 @@ export const getRecommendedLocations = async (userId, latitude, longitude) => {
       baseURL: "http://localhost:5000",
     });
 
-    const response = await axiosLocalInstance.post("/api/ai/process-location", {
+    const response = await axiosLocalInstance.post("/recommend", {
       user_id: userId,
       latitude: latitude,
       longitude: longitude,

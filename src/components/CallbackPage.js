@@ -45,7 +45,13 @@ const CallbackPage = () => {
     }
   }, [navigate]);
 
-  return <div>Loading…</div>;
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="text-center animate-pulse">
+        <p className="text-2xl">Loading ... 💬</p>
+      </div>
+    </div>
+  );
 };
 
 export default CallbackPage;

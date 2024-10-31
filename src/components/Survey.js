@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitSurvey } from "../api/survey";
+import Image from "./image/image1.jpg";
 
 const AgeCategory = {
   TWENTIES: "TWENTIES",
@@ -42,6 +43,7 @@ function Survey() {
     const newRequest = { ...request, ...data };
     console.log("newRequest: ", newRequest);
     setRequest(newRequest);
+
     if (step === "final") {
       try {
         await submitSurvey(newRequest, token);
@@ -55,19 +57,23 @@ function Survey() {
   };
 
   return (
-    <div
-      style={{ padding: "24px", backgroundColor: "#F9FAFB", margin: "24px" }}
-    >
-      {step === "1-page" && (
-        <Survey1Page onNext={(data) => handleNext("2-page", data)} />
-      )}
-      {step === "2-page" && (
-        <Survey2Page onNext={(data) => handleNext("final", data)} />
-      )}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6 max-w-1/2 z-10">
+      <img
+        src={Image}
+        alt="설명"
+        className="absolute inset-0 w-full h-full object-cover opacity-50 z-0"
+      />
+      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-1/3 z-10">
+        {step === "1-page" && (
+          <Survey1Page onNext={(data) => handleNext("2-page", data)} />
+        )}
+        {step === "2-page" && (
+          <Survey2Page onNext={(data) => handleNext("final", data)} />
+        )}
+      </div>
     </div>
   );
 }
-
 export default Survey;
 
 function Survey1Page({ onNext }) {
@@ -92,52 +98,75 @@ function Survey1Page({ onNext }) {
   };
 
   const buttonStyle = (isSelected) => ({
-    backgroundColor: isSelected ? "#ddd" : "#FFFFFF",
+    backgroundColor: isSelected ? "#3B82F6" : "#FFFFFF",
+    color: isSelected ? "#FFFFFF" : "#3B82F6",
+    border: `2px solid ${isSelected ? "#3B82F6" : "#D1D5DB"}`,
+    padding: "6px 12px", // 버튼의 크기를 줄이기 위해 padding 값 조정
+    fontSize: "14px", // 버튼의 텍스트 크기를 줄이기 위해 font-size 조정
   });
 
   return (
-    <div>
-      <h1>설문조사</h1>
-      <div>
-        <p>선호하는 동행자 성별</p>
-        <div style={{ display: "flex", gap: "10px" }}>
+    <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg max-w-1/2 w-full">
+      <h1 className="text-3xl font-bold text-center mb-6">VOYAGE CONNECT</h1>
+      <h2 className="text-xl font-bold mb-4">| 설문 조사</h2>
+
+      <div className="my-6 border-b border-white"></div>
+
+      <div className="mb-6">
+        <label className="block text-gray-700 mb-2">선호하는 동행자 성별</label>
+        <div className="flex justify-around mt-2">
           <button
             style={buttonStyle(selected.preferredGender === "MALE")}
+            className="py-2 px-4 rounded-md transition duration-200"
             onClick={() => handleSelected("preferredGender", "MALE")}
           >
             남성
           </button>
           <button
             style={buttonStyle(selected.preferredGender === "FEMALE")}
+            className="py-2 px-4 rounded-md transition duration-200"
             onClick={() => handleSelected("preferredGender", "FEMALE")}
           >
             여성
           </button>
           <button
             style={buttonStyle(selected.preferredGender === "ANY")}
+            className="py-2 px-4 rounded-md transition duration-200"
             onClick={() => handleSelected("preferredGender", "ANY")}
           >
             상관없음
           </button>
         </div>
       </div>
-      <div>
-        <p>선호하는 동행자 나이대</p>
-        <div>
-          <RangeSelector
-            options={[
-              { name: "20대", value: 1 },
-              { name: "30대", value: 2 },
-              { name: "40대", value: 3 },
-              { name: "50대", value: 4 },
-              { name: "60대 이상", value: 5 },
-            ]}
-            onChange={(value) => handleSelected("preferredAge", value)}
-            name="preferredAge"
-          />
-        </div>
+
+      <div className="my-10 border-b border-gray-300"></div>
+
+      <div className="mb-10">
+        {" "}
+        <label className="block text-gray-700 mb-2">선호하는 나이대</label>
+        <RangeSelector
+          options={[
+            { name: "20대", value: 1 },
+            { name: "30대", value: 2 },
+            { name: "40대", value: 3 },
+            { name: "50대", value: 4 },
+            { name: "60대 이상", value: 5 },
+          ]}
+          onChange={(value) => handleSelected("preferredAge", value)}
+          name="preferredAge"
+        />
       </div>
-      <button onClick={handleNext} disabled={isDisabled}>
+
+      {/* 구분선 추가 */}
+      <div className="my-6 border-t border-gray-300"></div>
+
+      <button
+        onClick={handleNext}
+        disabled={isDisabled}
+        className={`w-full py-2 rounded-md text-white mt-6 ${
+          isDisabled ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+        } transition duration-200`}
+      >
         다음 페이지
       </button>
     </div>
@@ -178,51 +207,57 @@ function Survey2Page({ onNext }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div style={{ display: "flex", gap: "10px" }}>
-        <div style={{ width: "121px", height: "20px" }}></div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            flex: 1,
-            padding: "0 26px",
-          }}
-        >
-          {surveyItemOptions.map((item) => (
-            <span key={item.value}>{item.value}</span>
+    <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg max-w w-full">
+      <h1 className="text-3xl font-bold text-center mb-6">VOYAGE CONNECT</h1>
+      <h2 className="text-xl font-bold mb-4">| 주제별 선호도</h2>
+
+      <div className="my-6 border-b border-gray-300"></div>
+
+      {/* 첫 번째 줄에만 12345 표시 */}
+      <div className="flex items-center mb-4">
+        <div className="w-1/2 text-left pr-4">
+          <span className="font-semibold"></span>
+        </div>
+        <div className="flex items-center justify-around w-full">
+          {surveyItemOptions.map((option) => (
+            <span key={option.value} className="text-gray-500">
+              {option.value}
+            </span>
           ))}
         </div>
       </div>
+
       {surveyItemKeys.map((item) => (
-        <div
-          key={item.key}
-          style={{ display: "flex", gap: "10px", alignItems: "center" }}
-        >
-          <div
-            style={{
-              border: "1px solid black",
-              height: "36px",
-              lineHeight: "36px",
-              padding: "0 10px",
-              borderRadius: "10px",
-              minWidth: "100px",
-              textAlign: "center",
-            }}
-          >
-            {item.name}
+        <div key={item.key} className="flex items-center mb-4">
+          <div className="w-1/2 text-left pr-4">
+            <span className="font-semibold">{item.name}</span>
           </div>
-          <RangeSelector
-            options={surveyItemOptions}
-            onChange={(value) => handleSelected(item.key, value)}
-            name={item.key}
-            isNoLabel
-          />
+          <div className="flex items-center justify-around w-full">
+            {surveyItemOptions.map((option) => (
+              <div
+                key={`${item.key}-${option.value}`}
+                className="flex flex-col items-center space-y-1"
+              >
+                <div
+                  className={`w-6 h-6 my-2 rounded-full transition-all duration-200 cursor-pointer ${
+                    selected[item.key] === option.value
+                      ? "bg-blue-600 border-2 border-blue-600"
+                      : "bg-white border-2 border-gray-300"
+                  }`}
+                  onClick={() => handleSelected(item.key, option.value)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ))}
+
       <button
-        onClick={() => !isDisabled && onNext(selected)}
+        onClick={() => !isDisabled && onNext(selected)} // 비활성화가 아닐 때만 onNext 호출
         disabled={isDisabled}
+        className={`w-full py-2 rounded-md text-white ${
+          isDisabled ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+        } transition duration-200`}
       >
         설문조사 완료
       </button>
@@ -245,80 +280,31 @@ const RangeSelector = ({
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "768px",
-        margin: "0 auto",
-        padding: "16px",
-      }}
-    >
-      <div style={{ position: "relative", height: "fit-content" }}>
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            height: "2px",
-            backgroundColor: "#E5E7EB",
-            width: "100%",
-          }}
-        />
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            justifyContent: "space-between",
-            width: "100%",
-          }}
-        >
-          {options.map((option, index) => (
-            <div
-              key={`${name}-${index}`}
-              onClick={() => handleClick(option.value)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              {!isNoLabel && (
-                <div
-                  style={{
-                    marginBottom: "8px",
-                    fontSize: "14px",
-                    color: "#4B5563",
-                    position: "absolute",
-                    top: "-20px",
-                    width: "fit-content",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {option.name}
-                </div>
-              )}
+    <div className="flex-1">
+      <div className="relative">
+        <div className="w-full max-w">
+          {" "}
+          {/* 최대 가로 크기 제한 */}
+          <div className="flex justify-between space-x-20">
+            {" "}
+            {/* 여백 추가 */}
+            {options.map((option, index) => (
               <div
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  backgroundColor:
-                    selectedValue === option.value ? "#3B82F6" : "#FFFFFF",
-                  border:
+                key={`${name}-${index}`}
+                onClick={() => handleClick(option.value)}
+                className="flex flex-col items-center cursor-pointer"
+              >
+                {!isNoLabel && <div>{option.name}</div>}
+                <div
+                  className={`w-6 h-6 my-2 rounded-full transition-all duration-200 ${
                     selectedValue === option.value
-                      ? "2px solid transparent"
-                      : "2px solid #D1D5DB",
-                  boxShadow:
-                    selectedValue === option.value
-                      ? "0 0 0 4px #BFDBFE"
-                      : "none",
-                  transition: "all 0.2s ease",
-                }}
-              />
-            </div>
-          ))}
+                      ? "bg-blue-600 border-2 border-blue-600"
+                      : "bg-white border-2 border-gray-300"
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
