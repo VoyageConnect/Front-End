@@ -1,143 +1,91 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { fetchFeeds } from "../api/sns"; // API 호출 함수 가져오기
 
-const SNS = () => {
+const Sns = () => {
+  const { region } = useParams(); // URL에서 지역명을 가져옴
+  const [feeds, setFeeds] = useState([]); // 피드 데이터를 저장할 상태
+  const [error, setError] = useState(""); // 오류 메시지 저장
+
+  // 각 지역별 기본 데이터를 설정
+  const regionData = {
+    서울: {
+      title: "서울 게시판",
+      imageUrl: "path_to_seoul_image.jpg",
+    },
+    경기도: {
+      title: "경기도 게시판",
+      imageUrl: "path_to_gyeonggi_image.jpg",
+    },
+    강원도: {
+      title: "강원도 게시판",
+      imageUrl: "path_to_gangwon_image.jpg",
+    },
+    충청도: {
+      title: "충청도 게시판",
+      imageUrl: "path_to_seoul_image.jpg",
+    },
+    전라도: {
+      title: "전라도 게시판",
+      imageUrl: "path_to_seoul_image.jpg",
+    },
+    경상도: {
+      title: "경상도 게시판",
+      imageUrl: "path_to_seoul_image.jpg",
+    },
+    제주도: {
+      title: "제주도 게시판",
+      imageUrl: "path_to_seoul_image.jpg",
+    },
+  };
+
+  // 해당 지역의 기본 데이터를 가져옴, 없으면 기본값으로 설정
+  const data = regionData[region] || {
+    title: "게시판",
+    imageUrl: "default_image.jpg",
+  };
+
+  // 컴포넌트가 마운트되거나 지역이 변경될 때 API 호출
+  useEffect(() => {
+    const loadFeeds = async () => {
+      try {
+        const data = await fetchFeeds(region); // API 호출
+        setFeeds(data); // 데이터 상태에 저장
+      } catch (error) {
+        setError(error.message); // 오류 메시지 설정
+      }
+    };
+
+    loadFeeds();
+  }, [region]); // region이 변경될 때마다 데이터를 다시 로드
+
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="w-1/5 bg-white h-screen shadow-md">
-        <div className="p-4 text-center">
-          <h1 className="text-lg font-bold">VOYAGE CONNECT</h1>
-        </div>
-        <nav className="mt-10">
-          <ul>
-            <li className="flex items-center p-4 hover:bg-gray-200">
-              <span className="material-icons">star</span>
-              <span className="ml-2">Story</span>
-            </li>
-            <li className="flex items-center p-4 hover:bg-gray-200">
-              <span className="material-icons">chat</span>
-              <span className="ml-2">Chat</span>
-            </li>
-            <li className="flex items-center p-4 hover:bg-gray-200">
-              <span className="material-icons">person</span>
-              <span className="ml-2">Profile</span>
-            </li>
-            <li className="flex items-center p-4 hover:bg-gray-200">
-              <span className="material-icons">settings</span>
-              <span className="ml-2">Setting</span>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="w-4/5 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">SNS Feed</h2>
-        </div>
-        <div className="space-y-8">
-          {/* Dummy Post 1 */}
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <div className="flex items-center mb-4">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Profile"
-                className="rounded-full"
-              />
-              <span className="ml-2 font-bold">user_one</span>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <img
-                src="https://source.unsplash.com/random/300x200?city"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?nature"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?travel"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-            </div>
-            <div className="flex items-center mt-4">
-              <span className="material-icons">favorite_border</span>
-              <span className="ml-2">Location</span>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-3xl font-bold mb-4">{data.title}</h1>
+      <img
+        src={data.imageUrl}
+        alt={region}
+        className="w-full h-64 object-cover rounded-lg mb-4"
+      />
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {feeds.map((feed, index) => (
+          <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+            <img
+              src={feed.imageUrl}
+              alt={feed.subRegion || feed.cityName}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-4">
+              <h2 className="text-xl font-semibold">
+                {feed.subRegion || feed.cityName}
+              </h2>
             </div>
           </div>
-
-          {/* Dummy Post 2 */}
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <div className="flex items-center mb-4">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Profile"
-                className="rounded-full"
-              />
-              <span className="ml-2 font-bold">user_two</span>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <img
-                src="https://source.unsplash.com/random/300x200?beach"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?food"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?drink"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-            </div>
-            <div className="flex items-center mt-4">
-              <span className="material-icons">favorite_border</span>
-              <span className="ml-2">Beach</span>
-            </div>
-          </div>
-
-          {/* Dummy Post 3 */}
-          <div className="bg-white p-4 rounded-lg shadow-md">
-            <div className="flex items-center mb-4">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Profile"
-                className="rounded-full"
-              />
-              <span className="ml-2 font-bold">user_three</span>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <img
-                src="https://source.unsplash.com/random/300x200?food"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?sunset"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-              <img
-                src="https://source.unsplash.com/random/300x200?mountain"
-                alt="Post Image"
-                className="rounded-lg"
-              />
-            </div>
-            <div className="flex items-center mt-4">
-              <span className="material-icons">favorite_border</span>
-              <span className="ml-2">Adventure</span>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
 };
 
-export default SNS;
+export default Sns;

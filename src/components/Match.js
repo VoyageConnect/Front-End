@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMatchMessages, sendMessage } from "../api/match";
-import io from "socket.io-client";
-import { motion } from "framer-motion"; // framer-motion 라이브러리 사용
+import { motion } from "framer-motion";
 import Icon from "./image/icon.png";
-
-const socket = io("http://localhost:3000"); // WebSocket 서버 URL (예시)
 
 const STEPS = {
   INIT: "INIT",
@@ -15,14 +11,19 @@ const STEPS = {
 
 const Match = () => {
   const [step, setStep] = useState(STEPS.INIT);
-  const user1 = "user1";
-  const user2 = "user2";
+  const [showEndCompanionButton, setShowEndCompanionButton] = useState(false);
+  const navigate = useNavigate();
 
   const startMatching = () => {
     setStep(STEPS.LOADING);
     setTimeout(() => {
       setStep(STEPS.CHATTING);
-    }, 3000); // 3초 후에 채팅방으로 이동
+    }, 3000);
+  };
+
+  const handleEndCompanion = () => {
+    setShowEndCompanionButton(false);
+    navigate("/post/create");
   };
 
   return (
@@ -33,7 +34,20 @@ const Match = () => {
         className="absolute inset-0 w-full h-full object-cover opacity-30"
       />
       <div className="bg-white p-10 rounded-lg shadow-lg text-center w-1/3 z-10">
-        <h1 className="text-4xl font-bold mb-6 text-gray-800">랜덤 매칭</h1>
+        <div className="flex items-center mb-6">
+          <h1 className="text-4xl font-bold text-gray-800 flex-grow">
+            랜덤 매칭
+          </h1>
+          {showEndCompanionButton && (
+            <button
+              onClick={handleEndCompanion}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"
+              style={{ height: "45px", width: "60px" }}
+            >
+              동행 종료
+            </button>
+          )}
+        </div>
         <p className="text-gray-600 mb-4">새로운 친구와 대화를 나눠 보세요!</p>
         {step === STEPS.INIT && (
           <button
@@ -45,7 +59,9 @@ const Match = () => {
         )}
         {step === STEPS.LOADING && <LoadingScreen />}
         {step === STEPS.CHATTING && (
-          <ChattingStep user1={user1} user2={user2} />
+          <ChattingStep
+            onShowEndButton={() => setShowEndCompanionButton(true)}
+          />
         )}
       </div>
     </div>
@@ -68,53 +84,32 @@ const LoadingScreen = () => (
   </div>
 );
 
-// useDelayAction 커스텀 훅
-const useDelayAction = () => {
-  const delayAction = ({ action, delay: delayTime = 3000 }) => {
-    const timer = setTimeout(action, delayTime);
-    return () => clearTimeout(timer);
-  };
-
-  return { delayAction };
-};
-
-const COMPANY_POPUP_DELAY = 5000; // 몇초 뒤에 팝업 표시할건지
-
-const ChattingStep = ({ user1, user2 }) => {
+const ChattingStep = ({ onShowEndButton }) => {
   const [isChatting, setIsChatting] = useState(true);
   const [popupVisible, setPopupVisible] = useState(false);
 
-  const { delayAction } = useDelayAction();
+  useEffect(() => {
+    setTimeout(() => {
+      setPopupVisible(true);
+      setIsChatting(false);
+    }, 5000);
+  }, []);
 
-  // 팝업 표시, 채팅 비활성화
-  const onPopupVisible = () => {
-    setPopupVisible(true);
-    setIsChatting(false);
-  };
-
-  // 팝업 닫기, 채팅 활성화
-  const onPopupClose = () => {
+  const handleContinueCompanion = () => {
     setPopupVisible(false);
     setIsChatting(true);
+    onShowEndButton();
   };
-
-  useEffect(() => {
-    delayAction({
-      action: onPopupVisible,
-      delay: COMPANY_POPUP_DELAY, // 5초 뒤에 팝업 표시
-    });
-  }, []);
 
   return (
     <div>
       <h2>채팅방</h2>
       <ChatRoom disableChat={!isChatting} />
-      {popupVisible && <CompanyPopup onClose={onPopupClose} />}
+      {popupVisible && <CompanyPopup onClose={handleContinueCompanion} />}
     </div>
   );
 };
 
-// 채팅창
 function ChatRoom({ disableChat }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
@@ -122,21 +117,13 @@ function ChatRoom({ disableChat }) {
     { user: "other", message: "익명2님이 입장하셨습니다." },
   ]);
 
-  // 내가 보낸 메시지
   const onSendMessage = (message) => {
     if (message.trim()) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          user: "me",
-          message,
-        },
-      ]);
+      setMessages((prevMessages) => [...prevMessages, { user: "me", message }]);
       setInput("");
     }
   };
 
-  // 엔터키 눌렀을 때 메시지 전송
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       onSendMessage(input);
@@ -194,31 +181,28 @@ function ChatRoom({ disableChat }) {
           </div>
         ))}
       </div>
-
       <div
         style={{
           display: "flex",
           padding: "10px",
           borderTop: "1px solid #e0e0e0",
-          backgroundColor: "#ffffff",
         }}
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown} // 엔터키 이벤트 추가
+          onKeyDown={handleKeyDown}
           disabled={disableChat}
           placeholder="메시지를 입력하세요"
           style={{
             flex: 1,
-            height: "45px", // 입력창 높이 설정
-            padding: "0 15px", // 상하 패딩을 줄여서 높이 맞춤
+            height: "45px",
+            padding: "0 15px",
             borderRadius: "20px",
             border: "1px solid #e0e0e0",
             outline: "none",
             fontSize: "16px",
-            marginTop: "20px",
           }}
         />
         <button
@@ -226,17 +210,15 @@ function ChatRoom({ disableChat }) {
           disabled={disableChat}
           style={{
             marginLeft: "10px",
-            height: "45px", // 버튼 높이 설정
-            padding: "0 15px", // 상하 패딩을 줄여서 높이 맞춤
-            borderRadius: "20px", // 버튼 모서리 둥글게
+            height: "45px",
+            padding: "0 15px",
+            borderRadius: "20px",
             backgroundColor: "#34b7f1",
             color: "#fff",
             border: "none",
-            fontSize: "14px", // 버튼 폰트 크기
+            fontSize: "14px",
             cursor: "pointer",
-            outline: "none",
-            width: "60px", // 버튼 너비 설정
-            marginTop: "20px",
+            width: "60px",
           }}
         >
           전송
@@ -246,18 +228,7 @@ function ChatRoom({ disableChat }) {
   );
 }
 
-// 일정 시간 뒤에 나타나는 동행하기 팝업창
 function CompanyPopup({ onClose }) {
-  const navigate = useNavigate();
-
-  const handleContinue = () => {
-    onClose();
-  };
-
-  const handleQuit = () => {
-    navigate("/home");
-  };
-
   return (
     <div
       style={{
@@ -270,21 +241,19 @@ function CompanyPopup({ onClose }) {
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         zIndex: 100,
       }}
     >
       <div
         style={{
           backgroundColor: "white",
-          padding: "30px", // 패딩 증가
-          borderRadius: "15px", // 모서리 둥글기 증가
+          padding: "30px",
+          borderRadius: "15px",
           display: "flex",
           flexDirection: "column",
-          gap: "20px", // 내부 요소 간격 증가
-          minWidth: "400px", // 너비 확대
-          maxWidth: "500px", // 최대 너비 설정
+          gap: "20px",
+          minWidth: "400px",
+          maxWidth: "500px",
         }}
       >
         <h3
@@ -303,17 +272,15 @@ function CompanyPopup({ onClose }) {
             gap: "15px",
           }}
         >
-          {" "}
-          {/* 버튼 사이 간격 추가 */}
           <button
             style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={handleContinue}
+            onClick={onClose}
           >
             동행하기
           </button>
           <button
             style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={handleQuit}
+            onClick={() => (window.location.href = "/home")}
           >
             그만하기
           </button>

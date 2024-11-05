@@ -16,11 +16,13 @@ const RecTab = () => {
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
+  // Google Maps API 로드
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyCNH8xLS_XvX0pVVSYtBNjCUxc50iwgb20",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
 
+  // 사용자 위치 가져오기
   useEffect(() => {
     const fetchUserLocation = () => {
       if (navigator.geolocation) {
@@ -50,13 +52,15 @@ const RecTab = () => {
     fetchUserLocation();
   }, []);
 
+  // 추천 장소 가져오기
   useEffect(() => {
     const fetchRecommendations = async () => {
       if (userLocation) {
         setLoadingRecommendations(true);
         setError("");
         try {
-          const userId = "defaultUser";
+          // user_id 값을 적절히 설정하세요.
+          const userId = "example_user_id"; // 실제 user_id로 변경 필요
           const response = await axios.post("http://localhost:5000/recommend", {
             user_id: userId,
             latitude: userLocation.latitude,
@@ -82,75 +86,6 @@ const RecTab = () => {
         }
       }
     };
-
-    // // 더미 데이터 부분 , 실제로는 위에 코드 사용해야 함
-    // useEffect(() => {
-    //   const fetchUserLocation = () => {
-    //     // 더미 사용자 위치
-    //     const dummyLocation = { latitude: 37.5665, longitude: 126.978 };
-    //     setUserLocation(dummyLocation);
-    //     setLoadingLocation(false);
-    //   };
-
-    //   fetchUserLocation();
-    // }, []);
-
-    // useEffect(() => {
-    //   const fetchRecommendations = async () => {
-    //     if (userLocation) {
-    //       setLoadingRecommendations(true);
-    //       setError("");
-
-    //       // 더미 추천 장소 데이터
-    //       const dummyRecommendations = [
-    //         {
-    //           name: "서울 연남동",
-    //           description: "트렌디한 카페와 맛집이 많은 곳",
-    //           latitude: 37.5645,
-    //           longitude: 126.935,
-    //           distance: 1.2,
-    //           type: "Cafe",
-    //         },
-    //         {
-    //           name: "서울 연희동",
-    //           description: "아기자기한 가게들이 즐비한 거리",
-    //           latitude: 37.5635,
-    //           longitude: 126.934,
-    //           distance: 1.6,
-    //           type: "Shop",
-    //         },
-    //         {
-    //           name: "서울 합정동",
-    //           description: "힙한 분위기의 바와 레스토랑",
-    //           latitude: 37.549,
-    //           longitude: 126.911,
-    //           distance: 2.1,
-    //           type: "Bar",
-    //         },
-    //         {
-    //           name: "서울 망원동",
-    //           description: "한적한 공원과 마켓이 있는 동네",
-    //           latitude: 37.5535,
-    //           longitude: 126.913,
-    //           distance: 2.8,
-    //           type: "Market",
-    //         },
-    //         {
-    //           name: "서울 홍대",
-    //           description: "젊은이들이 모이는 핫플레이스",
-    //           latitude: 37.5572,
-    //           longitude: 126.9256,
-    //           distance: 3.3,
-    //           type: "Entertainment",
-    //         },
-    //       ];
-
-    //       setRecommendations(dummyRecommendations);
-    //       setLoadingRecommendations(false);
-    //     }
-    //   };
-
-    //   // 더미 데이터 부분
 
     fetchRecommendations();
   }, [userLocation]);
@@ -184,102 +119,28 @@ const RecTab = () => {
 
         <div className="my-10 border-b border-gray-300"></div>
 
-        {/* 나머지 버튼들 */}
+        {/* Sidebar buttons */}
         <div className="flex flex-col items-center">
-          {/* Star Icon */}
-          <button
-            className="mb-12 flex flex-col items-center justify-center"
-            style={{ width: "60px", height: "60px" }}
-            onClick={() => (window.location.href = "http://localhost:3000/Sns")}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21 12 17.27z"
-              />
-            </svg>
-            <span className="text-xs">Story</span>
-          </button>
-
-          {/* Chat Icon */}
-          <button
-            className="mb-12 flex flex-col items-center justify-center"
-            style={{ width: "60px", height: "60px" }}
-            onClick={() =>
-              (window.location.href = "http://localhost:3000/Chat")
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 12h8m-4 4h4m-4-8h4m-8 4h.01M4 4h16v16H4V4z"
-              />
-            </svg>
-            <span className="text-xs">Chat</span>
-          </button>
-
-          {/* Profile */}
-          <button
-            className="mb-12 flex flex-col items-center justify-center"
-            style={{ width: "60px", height: "60px" }}
-            onClick={() =>
-              (window.location.href = "http://localhost:3000/Profile")
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z"
-              />
-            </svg>
-            <span className="text-xs">Profile</span>
-          </button>
-
-          {/* Settings */}
-          <button
-            className="flex flex-col items-center justify-center"
-            style={{ width: "60px", height: "60px" }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8.5v3.5m0 0v3.5m0-3.5h3.5m-3.5 0H8.5m8.5 0a1 1 0 011 1v0a1 1 0 01-.25.67l-2.5 2.5a1 1 0 01-.67.25h-0a1 1 0 01-1-1v-3.5a1 1 0 011-1h0zm-8.5 0a1 1 0 00-1 1v0a1 1 0 00.25.67l2.5 2.5a1 1 0 00.67.25h0a1 1 0 001-1v-3.5a1 1 0 00-1-1h0z"
-              />
-            </svg>
-            <span className="text-xs">Setting</span>
-          </button>
+          <SidebarButton
+            link="http://localhost:3000/Sns"
+            iconPath="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21 12 17.27z"
+            label="Story"
+          />
+          <SidebarButton
+            link="http://localhost:3000/Chat"
+            iconPath="M8 12h8m-4 4h4m-4-8h4m-8 4h.01M4 4h16v16H4V4z"
+            label="Chat"
+          />
+          <SidebarButton
+            link="http://localhost:3000/Profile"
+            iconPath="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z"
+            label="Profile"
+          />
+          <SidebarButton
+            link="#"
+            iconPath="M12 8.5v3.5m0 0v3.5m0-3.5h3.5m-3.5 0H8.5m8.5 0a1 1 0 011 1v0a1 1 0 01-.25.67l-2.5 2.5a1 1 0 01-.67.25h-0a1 1 0 01-1-1v-3.5a1 1 0 011-1h0zm-8.5 0a1 1 0 00-1 1v0a1 1 0 00.25.67l2.5 2.5a1 1 0 00.67.25h0a1 1 0 001-1v-3.5a1 1 0 00-1-1h0z"
+            label="Setting"
+          />
         </div>
       </div>
 
@@ -288,22 +149,6 @@ const RecTab = () => {
         <h1 className="text-4xl font-bold mb-4">AI Service</h1>
         {error && <p className="text-red-500">{error}</p>}
 
-        <button className="absolute top-4 right-6 w-8 h-8 p-1.5 rounded-full bg-black-200 hover:bg-gray-300">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
-        </button>
         {loadingLocation ? (
           <p>Loading user location...</p>
         ) : userLocation ? (
@@ -407,3 +252,28 @@ const RecTab = () => {
 };
 
 export default RecTab;
+
+// Sidebar 버튼 컴포넌트
+const SidebarButton = ({ link, iconPath, label }) => (
+  <button
+    className="mb-12 flex flex-col items-center justify-center"
+    style={{ width: "60px", height: "60px" }}
+    onClick={() => (window.location.href = link)}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d={iconPath}
+      />
+    </svg>
+    <span className="text-xs">{label}</span>
+  </button>
+);

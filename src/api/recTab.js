@@ -5,7 +5,7 @@ export const getRecommendedLocations = async (userId, latitude, longitude) => {
   try {
     // localhost:5000을 base URL로 사용하는 axios 인스턴스 생성
     const axiosLocalInstance = axios.create({
-      baseURL: "http://localhost:5000",
+      baseURL: "http://:5000",
     });
 
     const response = await axiosLocalInstance.post("/recommend", {
