@@ -13,38 +13,83 @@ const Home = () => {
   const travelList = [
     {
       id: 1,
-      locationName: "서울",
-      imageUrl: "path_to_image1.jpg",
+      locationName: "서울특별시",
+      imageUrl: "path_to_seoul_image.jpg",
     },
     {
       id: 2,
-      locationName: "경기도",
-      imageUrl: "path_to_image2.jpg",
+      locationName: "부산광역시",
+      imageUrl: "path_to_busan_image.jpg",
     },
     {
       id: 3,
-      locationName: "강원도",
-      imageUrl: "path_to_image3.jpg",
+      locationName: "대구광역시",
+      imageUrl: "path_to_daegu_image.jpg",
     },
     {
       id: 4,
-      locationName: "충청도",
-      imageUrl: "path_to_image1.jpg",
+      locationName: "인천광역시",
+      imageUrl: "path_to_incheon_image.jpg",
     },
     {
       id: 5,
-      locationName: "전라도",
-      imageUrl: "path_to_image1.jpg",
+      locationName: "광주광역시",
+      imageUrl: "path_to_gwangju_image.jpg",
     },
     {
       id: 6,
-      locationName: "경상도",
-      imageUrl: "path_to_image1.jpg",
+      locationName: "대전광역시",
+      imageUrl: "path_to_daejeon_image.jpg",
     },
     {
       id: 7,
-      locationName: "제주도",
-      imageUrl: "path_to_image1.jpg",
+      locationName: "울산광역시",
+      imageUrl: "path_to_ulsan_image.jpg",
+    },
+    {
+      id: 8,
+      locationName: "경기도",
+      imageUrl: "path_to_gyeonggi_image.jpg",
+    },
+    {
+      id: 9,
+      locationName: "강원도",
+      imageUrl: "path_to_gangwon_image.jpg",
+    },
+    {
+      id: 10,
+      locationName: "충청북도",
+      imageUrl: "path_to_chungbuk_image.jpg",
+    },
+    {
+      id: 11,
+      locationName: "충청남도",
+      imageUrl: "path_to_chungnam_image.jpg",
+    },
+    {
+      id: 12,
+      locationName: "전라북도",
+      imageUrl: "path_to_jeonbuk_image.jpg",
+    },
+    {
+      id: 13,
+      locationName: "전라남도",
+      imageUrl: "path_to_jeonnam_image.jpg",
+    },
+    {
+      id: 14,
+      locationName: "경상북도",
+      imageUrl: "path_to_gyeongbuk_image.jpg",
+    },
+    {
+      id: 15,
+      locationName: "경상남도",
+      imageUrl: "path_to_gyeongnam_image.jpg",
+    },
+    {
+      id: 16,
+      locationName: "제주특별자치도",
+      imageUrl: "path_to_jeju_image.jpg",
     },
   ];
 
@@ -76,10 +121,10 @@ const Home = () => {
 
   const sliderSettings = {
     dots: true,
-    infinite: false,
+    infinite: true,
     speed: 500,
     slidesToShow: 3,
-    slidesToScroll: 1,
+    slidesToScroll: 2,
     prevArrow: <CustomPrevArrow />, // 커스텀 이전 화살표
     nextArrow: <CustomNextArrow />, // 커스텀 다음 화살표
     responsive: [

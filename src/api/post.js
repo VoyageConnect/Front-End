@@ -5,12 +5,12 @@ export const createPost = async (provinceName, cityName, file) => {
   try {
     // FormData 객체 생성
     const formData = new FormData();
-    formData.append("provinceName", provinceName);
-    formData.append("cityName", cityName);
-    formData.append("file", file);
+    formData.append("location", provinceName);
+    formData.append("subLocation", cityName);
+    formData.append("photo", file);
 
     // POST 요청 전송
-    const response = await axiosInstance.post("/api/posts", formData, {
+    const response = await axiosInstance.post("/api/sns/posts", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

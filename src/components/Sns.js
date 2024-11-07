@@ -9,33 +9,42 @@ const Sns = () => {
 
   // 각 지역별 기본 데이터를 설정
   const regionData = {
-    서울: {
-      title: "서울 게시판",
-      imageUrl: "path_to_seoul_image.jpg",
+    서울특별시: { title: "서울 게시판", imageUrl: "path_to_seoul_image.jpg" },
+    부산광역시: { title: "부산 게시판", imageUrl: "path_to_busan_image.jpg" },
+    대구광역시: { title: "대구 게시판", imageUrl: "path_to_daegu_image.jpg" },
+    인천광역시: { title: "인천 게시판", imageUrl: "path_to_incheon_image.jpg" },
+    광주광역시: { title: "광주 게시판", imageUrl: "path_to_gwangju_image.jpg" },
+    대전광역시: { title: "대전 게시판", imageUrl: "path_to_daejeon_image.jpg" },
+    울산광역시: { title: "울산 게시판", imageUrl: "path_to_ulsan_image.jpg" },
+    경기도: { title: "경기도 게시판", imageUrl: "path_to_gyeonggi_image.jpg" },
+    강원도: { title: "강원도 게시판", imageUrl: "path_to_gangwon_image.jpg" },
+    충청북도: {
+      title: "충청북도 게시판",
+      imageUrl: "path_to_chungbuk_image.jpg",
     },
-    경기도: {
-      title: "경기도 게시판",
-      imageUrl: "path_to_gyeonggi_image.jpg",
+    충청남도: {
+      title: "충청남도 게시판",
+      imageUrl: "path_to_chungnam_image.jpg",
     },
-    강원도: {
-      title: "강원도 게시판",
-      imageUrl: "path_to_gangwon_image.jpg",
+    전라북도: {
+      title: "전라북도 게시판",
+      imageUrl: "path_to_jeonbuk_image.jpg",
     },
-    충청도: {
-      title: "충청도 게시판",
-      imageUrl: "path_to_seoul_image.jpg",
+    전라남도: {
+      title: "전라남도 게시판",
+      imageUrl: "path_to_jeonnam_image.jpg",
     },
-    전라도: {
-      title: "전라도 게시판",
-      imageUrl: "path_to_seoul_image.jpg",
+    경상북도: {
+      title: "경상북도 게시판",
+      imageUrl: "path_to_gyeongbuk_image.jpg",
     },
-    경상도: {
-      title: "경상도 게시판",
-      imageUrl: "path_to_seoul_image.jpg",
+    경상남도: {
+      title: "경상남도 게시판",
+      imageUrl: "path_to_gyeongnam_image.jpg",
     },
-    제주도: {
-      title: "제주도 게시판",
-      imageUrl: "path_to_seoul_image.jpg",
+    제주특별자치도: {
+      title: "제주 게시판",
+      imageUrl: "path_to_jeju_image.jpg",
     },
   };
 
