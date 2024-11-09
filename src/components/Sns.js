@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchFeeds } from "../api/sns"; // API 호출 함수 가져오기
+import "./Sns.css"; // CSS 파일 임포트
 
 const Sns = () => {
   const { region } = useParams(); // URL에서 지역명을 가져옴
@@ -69,29 +70,25 @@ const Sns = () => {
   }, [region]); // region이 변경될 때마다 데이터를 다시 로드
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-4">{data.title}</h1>
-      <img
-        src={data.imageUrl}
-        alt={region}
-        className="w-full h-64 object-cover rounded-lg mb-4"
-      />
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {feeds.map((feed, index) => (
-          <div key={index} className="rounded-lg overflow-hidden shadow-lg">
-            <img
-              src={feed.imageUrl}
-              alt={feed.subRegion || feed.cityName}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h2 className="text-xl font-semibold">
-                {feed.subRegion || feed.cityName}
-              </h2>
+    <div className="container">
+      <h1 className="title">{data.title}</h1>
+      <img src={data.imageUrl} alt={region} className="image" />
+      {error && <p className="error">{error}</p>}
+      <div className="feed-grid">
+        {feeds.length > 0 ? (
+          feeds.map((feed, index) => (
+            <div key={index} className="feed-card">
+              <img
+                src={feed.photoUrl}
+                alt={feed.subLocation}
+                className="feed-image"
+              />
+              <div className="feed-title">{feed.subLocation}</div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-center">게시글이 없습니다.</p>
+        )}
       </div>
     </div>
   );

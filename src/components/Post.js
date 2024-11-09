@@ -105,40 +105,54 @@ const Post = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">게시글 등록</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-500 to-blue-300">
+      <div className="max-w-lg w-full p-8 bg-white rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
+          Posting 📸
+        </h1>
+        {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">현재 위치</label>
-          <p className="text-gray-600">
-            {provinceName && cityName
-              ? `${provinceName} ${cityName}`
-              : "위치 정보를 가져오는 중입니다..."}
-          </p>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold">
+              - 현재 위치
+            </label>
+            <p className="text-gray-600">
+              {provinceName && cityName
+                ? `${provinceName} ${cityName}`
+                : "위치 정보를 가져오는 중입니다..."}
+            </p>
+          </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">사진 업로드</label>
-          <input type="file" onChange={handleFileChange} />
-          {/* 미리보기 이미지 */}
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="미리보기"
-              className="mt-4 w-full h-64 object-cover rounded-lg shadow-md"
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold">
+              - 사진 업로드
+            </label>
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="mt-2 mb-4 p-2 border border-gray-300 rounded-lg w-full"
             />
-          )}
-        </div>
+            {/* 미리보기 이미지 */}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="미리보기"
+                className="mt-4 w-full h-64 object-cover rounded-lg shadow-md"
+              />
+            )}
+          </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
-        >
-          게시글 등록
-        </button>
-      </form>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200 w-full"
+            >
+              Upload
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

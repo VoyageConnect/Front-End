@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitSurvey } from "../api/survey";
 import Image from "./image/image1.jpg";
+import Modal from "./design/Modal";
 
 const AgeCategory = {
   TWENTIES: "TWENTIES",
@@ -23,7 +24,9 @@ function Survey() {
   const navigate = useNavigate();
   const [step, setStep] = useState("1-page");
   const [request, setRequest] = useState({});
-  const [token, setToken] = useState(localStorage.getItem("token")); // 토큰을 상태로 관리
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태 관리
+  const [modalMessage, setModalMessage] = useState(""); // 모달 메시지
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -47,13 +50,19 @@ function Survey() {
     if (step === "final") {
       try {
         await submitSurvey(newRequest, token);
-        navigate("/home");
+        setModalMessage("축하합니다! 설문조사가 완료되었습니다."); // 모달 메시지 설정
+        setIsModalOpen(true); // 모달 열기
       } catch (error) {
         console.error("Error submitting survey:", error);
       }
     } else {
       setStep(step);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    navigate("/home"); // 모달 닫을 때 홈으로 이동
   };
 
   return (
@@ -71,6 +80,12 @@ function Survey() {
           <Survey2Page onNext={(data) => handleNext("final", data)} />
         )}
       </div>
+      {/* 모달 컴포넌트 추가 */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        message={modalMessage}
+      />
     </div>
   );
 }
