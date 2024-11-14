@@ -10,7 +10,7 @@ export const createPost = async (provinceName, cityName, file) => {
     formData.append("photo", file);
 
     // POST 요청 전송
-    const response = await axiosInstance.post("/api/sns/posts", formData, {
+    const response = await axiosInstance.post("/api/sns/post", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

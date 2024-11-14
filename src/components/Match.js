@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import Icon from "./image/icon.png";
+import { postMatch } from "../api/match";
+import Chat from "./Chat"; // Chat 컴포넌트 임포트 확인
 
 const STEPS = {
   INIT: "INIT",
@@ -11,20 +13,52 @@ const STEPS = {
 
 const Match = () => {
   const [step, setStep] = useState(STEPS.INIT);
-  const [showEndCompanionButton, setShowEndCompanionButton] = useState(false);
+  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState(0);
+  const [retry, setRetry] = useState(0);
+  const [distance, setDistance] = useState(3);
+  const [status, setStatus] = useState("매칭 중...");
+  const [mapZoom, setMapZoom] = useState(14);
+  const [partnerId, setPartnerId] = useState(null);
   const navigate = useNavigate();
+
+  const userId = localStorage.getItem("userId"); // 로그인 시 저장된 userId 가져오기
 
   const startMatching = () => {
     setStep(STEPS.LOADING);
-    setTimeout(() => {
-      setStep(STEPS.CHATTING);
-    }, 3000);
+    handleMatch();
   };
 
-  const handleEndCompanion = () => {
-    setShowEndCompanionButton(false);
-    navigate("/post/create");
+  const handleMatch = async () => {
+    try {
+      const result = await postMatch(latitude, longitude, retry, userId);
+      if (result.result === "success") {
+        setStatus("매칭 성공!");
+        setPartnerId(result.partnerId); // 서버 응답에서 partnerId 가져오기
+        setStep(STEPS.CHATTING);
+      } else {
+        setRetry(retry + 1);
+        if (distance === 3) {
+          setDistance(5);
+          setMapZoom(12);
+        } else if (distance === 5) {
+          setDistance(10);
+          setMapZoom(10);
+        } else {
+          navigate("/home");
+        }
+      }
+    } catch (error) {
+      setStatus("매칭 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error("매칭 오류:", error);
+    }
   };
+
+  useEffect(() => {
+    if (step === STEPS.LOADING && distance <= 10) {
+      handleMatch();
+    }
+  }, [distance, step]);
 
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-r from-[#6a11cb] to-[#2575fc] relative">
@@ -34,20 +68,7 @@ const Match = () => {
         className="absolute inset-0 w-full h-full object-cover opacity-30"
       />
       <div className="bg-white p-10 rounded-lg shadow-lg text-center w-1/3 z-10">
-        <div className="flex items-center mb-6">
-          <h1 className="text-4xl font-bold text-gray-800 flex-grow">
-            랜덤 매칭
-          </h1>
-          {showEndCompanionButton && (
-            <button
-              onClick={handleEndCompanion}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm"
-              style={{ height: "45px", width: "60px" }}
-            >
-              동행 종료
-            </button>
-          )}
-        </div>
+        <h1 className="text-4xl font-bold text-gray-800 mb-6">랜덤 매칭</h1>
         <p className="text-gray-600 mb-4">새로운 친구와 대화를 나눠 보세요!</p>
         {step === STEPS.INIT && (
           <button
@@ -57,235 +78,58 @@ const Match = () => {
             랜덤 매칭 시작
           </button>
         )}
-        {step === STEPS.LOADING && <LoadingScreen />}
-        {step === STEPS.CHATTING && (
-          <ChattingStep
-            onShowEndButton={() => setShowEndCompanionButton(true)}
-          />
+        {step === STEPS.LOADING && (
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-t-transparent border-blue-600 rounded-full animate-spin mb-4"></div>
+            <p className="text-xl font-semibold text-gray-700">{status}</p>
+            <div style={{ height: "500px", width: "100%" }}>
+              <MapComponent
+                latitude={latitude}
+                longitude={longitude}
+                zoom={mapZoom}
+              />
+            </div>
+          </div>
+        )}
+        {step === STEPS.CHATTING && partnerId && (
+          <Chat userId={userId} partnerId={partnerId} />
         )}
       </div>
     </div>
   );
 };
 
-export default Match;
-
-// 로딩 화면 컴포넌트
-const LoadingScreen = () => (
-  <div className="flex flex-col items-center justify-center">
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 1 }}
-      className="mb-4"
-    >
-      <div className="w-12 h-12 border-4 border-t-transparent border-blue-600 rounded-full animate-spin"></div>
-    </motion.div>
-    <p className="text-xl font-semibold text-gray-700">Loading ... 💬</p>
-  </div>
-);
-
-const ChattingStep = ({ onShowEndButton }) => {
-  const [isChatting, setIsChatting] = useState(true);
-  const [popupVisible, setPopupVisible] = useState(false);
-
+const MapComponent = ({ latitude, longitude, zoom }) => {
   useEffect(() => {
-    setTimeout(() => {
-      setPopupVisible(true);
-      setIsChatting(false);
-    }, 5000);
-  }, []);
+    if (!window.google) {
+      console.error("Google Maps API가 로드되지 않았습니다.");
+      return;
+    }
 
-  const handleContinueCompanion = () => {
-    setPopupVisible(false);
-    setIsChatting(true);
-    onShowEndButton();
-  };
+    const mapOptions = {
+      center: { lat: latitude, lng: longitude },
+      zoom: zoom,
+    };
 
-  return (
-    <div>
-      <h2>채팅방</h2>
-      <ChatRoom disableChat={!isChatting} />
-      {popupVisible && <CompanyPopup onClose={handleContinueCompanion} />}
-    </div>
-  );
+    const map = new window.google.maps.Map(
+      document.getElementById("map"),
+      mapOptions
+    );
+
+    new window.google.maps.Marker({
+      position: { lat: latitude, lng: longitude },
+      map: map,
+    });
+  }, [latitude, longitude, zoom]);
+
+  return <div id="map" style={{ width: "100%", height: "100%" }} />;
 };
 
-function ChatRoom({ disableChat }) {
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    { user: "me", message: "익명1님이 입장하셨습니다." },
-    { user: "other", message: "익명2님이 입장하셨습니다." },
-  ]);
+// MapComponent의 PropTypes 정의
+MapComponent.propTypes = {
+  latitude: PropTypes.number.isRequired,
+  longitude: PropTypes.number.isRequired,
+  zoom: PropTypes.number.isRequired,
+};
 
-  const onSendMessage = (message) => {
-    if (message.trim()) {
-      setMessages((prevMessages) => [...prevMessages, { user: "me", message }]);
-      setInput("");
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      onSendMessage(input);
-    }
-  };
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "80vh",
-        maxWidth: "500px",
-        margin: "auto",
-        border: "1px solid #e0e0e0",
-        borderRadius: "15px",
-        overflow: "hidden",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          padding: "10px",
-          overflowY: "scroll",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          backgroundColor: "#f5f5f7",
-        }}
-      >
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            style={{
-              display: "flex",
-              justifyContent: msg.user === "me" ? "flex-end" : "flex-start",
-            }}
-          >
-            <div
-              style={{
-                maxWidth: "70%",
-                padding: "10px",
-                borderRadius: "10px",
-                backgroundColor: msg.user === "me" ? "#DCF8C6" : "#ffffff",
-                color: "#000",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
-                overflowWrap: "break-word",
-              }}
-            >
-              {msg.message}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          padding: "10px",
-          borderTop: "1px solid #e0e0e0",
-        }}
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={disableChat}
-          placeholder="메시지를 입력하세요"
-          style={{
-            flex: 1,
-            height: "45px",
-            padding: "0 15px",
-            borderRadius: "20px",
-            border: "1px solid #e0e0e0",
-            outline: "none",
-            fontSize: "16px",
-          }}
-        />
-        <button
-          onClick={() => onSendMessage(input)}
-          disabled={disableChat}
-          style={{
-            marginLeft: "10px",
-            height: "45px",
-            padding: "0 15px",
-            borderRadius: "20px",
-            backgroundColor: "#34b7f1",
-            color: "#fff",
-            border: "none",
-            fontSize: "14px",
-            cursor: "pointer",
-            width: "60px",
-          }}
-        >
-          전송
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CompanyPopup({ onClose }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        top: 0,
-        left: 0,
-        zIndex: 100,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "30px",
-          borderRadius: "15px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
-          minWidth: "400px",
-          maxWidth: "500px",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            textAlign: "center",
-          }}
-        >
-          동행을 하시겠습니까?
-        </h3>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "15px",
-          }}
-        >
-          <button
-            style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={onClose}
-          >
-            동행하기
-          </button>
-          <button
-            style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={() => (window.location.href = "/home")}
-          >
-            그만하기
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+export default Match;

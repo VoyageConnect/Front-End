@@ -7,6 +7,7 @@ import CallbackPage from "./components/CallbackPage";
 import Survey from "./components/Survey";
 import RecTab from "./components/RecTab";
 import Match from "./components/Match";
+import Chat from "./components/Chat";
 import Sns from "./components/Sns";
 import Post from "./components/Post";
 import "./styles.css";
@@ -19,11 +20,12 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/home" element={<Home />} />
-      <Route path="/board/:region" element={<Sns />} /> {/* 동적 경로 */}
+      <Route path="/board/:region" element={<Sns />} />
       <Route path="/survey" element={<Survey />} />
       <Route path="/rectab" element={<RecTab />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/match" element={<Match />} />
+      <Route path="/chat" element={<Chat />} />
       <Route path="/post/create" element={<Post />} />
       <Route path="/sns" element={<Sns />} />
     </Routes>
