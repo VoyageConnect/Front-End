@@ -8,6 +8,7 @@ import Chat from "./Chat"; // Chat 컴포넌트 임포트 확인
 const STEPS = {
   INIT: "INIT",
   LOADING: "LOADING",
+  SHOW_POPUP: "SHOW_POPUP", // 팝업 상태 추가
   CHATTING: "CHATTING",
 };
 
@@ -20,11 +21,47 @@ const Match = () => {
   const [status, setStatus] = useState("매칭 중...");
   const [mapZoom, setMapZoom] = useState(14);
   const [partnerId, setPartnerId] = useState(null);
+  const [popupData, setPopupData] = useState(null); // 팝업에 보여줄 데이터
   const navigate = useNavigate();
 
   const userId = localStorage.getItem("userId"); // 로그인 시 저장된 userId 가져오기
 
-  const startMatching = () => {
+  // 현재 위치를 가져오는 함수
+  const fetchCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        (error) => {
+          console.error("위치 정보를 가져오지 못했습니다.", error);
+          alert("위치 정보를 사용할 수 없습니다. 권한을 확인해주세요.");
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      alert("위치 정보를 지원하지 않는 브라우저입니다.");
+    }
+  };
+
+  const startMatching = async () => {
+    await new Promise((resolve, reject) => {
+      fetchCurrentLocation();
+      // 위치 정보 업데이트 후 500ms 기다림 (대안: 정확한 완료 핸들링)
+      setTimeout(() => {
+        if (latitude !== 0 && longitude !== 0) {
+          resolve();
+        } else {
+          reject(new Error("위치 정보를 가져오지 못했습니다."));
+        }
+      }, 500);
+    }).catch((error) => {
+      console.error(error.message);
+      alert("위치 정보를 가져오지 못했습니다. 다시 시도해주세요.");
+      return;
+    });
+
     setStep(STEPS.LOADING);
     handleMatch();
   };
@@ -34,8 +71,14 @@ const Match = () => {
       const result = await postMatch(latitude, longitude, retry, userId);
       if (result.result === "success") {
         setStatus("매칭 성공!");
-        setPartnerId(result.partnerId); // 서버 응답에서 partnerId 가져오기
-        setStep(STEPS.CHATTING);
+        setPopupData({ score: result.score, description: result.description });
+        setStep(STEPS.SHOW_POPUP); // 팝업 상태로 전환
+        setPartnerId(result.partnerId);
+
+        // 7초 후 팝업을 숨기고 채팅 화면으로 이동
+        setTimeout(() => {
+          setStep(STEPS.CHATTING);
+        }, 7000);
       } else {
         setRetry(retry + 1);
         if (distance === 3) {
@@ -89,6 +132,16 @@ const Match = () => {
                 zoom={mapZoom}
               />
             </div>
+          </div>
+        )}
+        {step === STEPS.SHOW_POPUP && popupData && (
+          <div className="bg-gray-800 bg-opacity-75 p-6 rounded-lg text-white absolute inset-0 flex flex-col items-center justify-center">
+            <h2 className="text-3xl font-bold mb-4">매칭 성공!</h2>
+            <p className="text-lg">점수: {popupData.score}</p>
+            <p className="text-lg mb-4">설명: {popupData.description}</p>
+            <p className="text-sm text-gray-300">
+              잠시 후 채팅 화면으로 이동합니다...
+            </p>
           </div>
         )}
         {step === STEPS.CHATTING && partnerId && (

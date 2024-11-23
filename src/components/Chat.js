@@ -1,68 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { sendPartnerId } from "../api/chat";
+import { initializeChat } from "../api/chat";
 
 const Chat = ({ userId, partnerId }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [ws, setWs] = useState(null); // 웹소켓 인스턴스
+  const [chatConnection, setChatConnection] = useState(null); // Socket.io 연결 인스턴스
   const [isChatting, setIsChatting] = useState(false); // 초기 상태는 false로 설정
   const [popupVisible, setPopupVisible] = useState(false);
   const [score, setScore] = useState(null); // 매칭된 score를 저장할 상태
   const navigate = useNavigate();
 
   useEffect(() => {
-    const initializeChat = async () => {
-      try {
-        const response = await sendPartnerId(userId, partnerId);
-
-        if (response.status === "OK") {
-          setScore(response.score); // score를 설정
-          const socket = new WebSocket(`ws://localhost:8080/chat/${userId}`);
-          setWs(socket);
-
-          socket.onopen = () => {
-            console.log("웹소켓 연결 성공");
-          };
-
-          socket.onmessage = (event) => {
-            const newMessage = JSON.parse(event.data);
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-          };
-
-          socket.onclose = () => {
-            console.log("웹소켓 연결 종료");
-          };
-
-          socket.onerror = (error) => {
-            console.error("웹소켓 오류:", error);
-          };
-        } else {
-          console.error("백엔드에서 OK 응답을 받지 못했습니다.");
-          navigate("/match"); // OK 응답이 아닌 경우 매칭 페이지로 리다이렉트
+    const initializeSocket = () => {
+      const connection = initializeChat(
+        userId,
+        partnerId,
+        (newMessage) => {
+          setMessages((prevMessages) => [...prevMessages, newMessage]);
+        },
+        (error) => {
+          console.error("Socket connection error:", error);
+          navigate("/match"); // 에러 발생 시 매칭 페이지로 리다이렉트
         }
-      } catch (error) {
-        console.error("채팅 초기화 오류:", error);
-      }
+      );
+      setChatConnection(connection);
     };
 
-    initializeChat();
+    initializeSocket();
 
     return () => {
-      if (ws) {
-        ws.close();
-      }
+      if (chatConnection) chatConnection.disconnect();
     };
   }, [userId, partnerId, navigate]);
 
   // 메시지 전송 함수
   const sendMessage = () => {
-    if (ws && inputMessage.trim()) {
+    if (chatConnection && inputMessage.trim()) {
       const messageData = {
         sender_id: userId,
         message: inputMessage,
       };
-      ws.send(JSON.stringify(messageData));
+      chatConnection.sendMessage(messageData);
       setMessages((prevMessages) => [...prevMessages, messageData]);
       setInputMessage("");
     }

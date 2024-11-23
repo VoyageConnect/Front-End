@@ -29,6 +29,14 @@ function Survey() {
   const [modalMessage, setModalMessage] = useState(""); // 모달 메시지
 
   useEffect(() => {
+    const surveySubmitted = localStorage.getItem("surveySubmitted");
+    if (surveySubmitted) {
+      setModalMessage("이미 설문조사를 완료하셨습니다."); // 모달 메시지 설정
+      setIsModalOpen(true); // 모달 열기
+    }
+  }, []);
+
+  useEffect(() => {
     const handleStorageChange = () => {
       const newToken = localStorage.getItem("token");
       setToken(newToken);
@@ -50,6 +58,7 @@ function Survey() {
     if (step === "final") {
       try {
         await submitSurvey(newRequest, token);
+        localStorage.setItem("surveySubmitted", "true"); // 설문조사 제출 상태 저장
         setModalMessage("축하합니다! 설문조사가 완료되었습니다."); // 모달 메시지 설정
         setIsModalOpen(true); // 모달 열기
       } catch (error) {
@@ -64,6 +73,18 @@ function Survey() {
     setIsModalOpen(false);
     navigate("/home"); // 모달 닫을 때 홈으로 이동
   };
+
+  if (localStorage.getItem("surveySubmitted")) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6 max-w-1/2 z-10">
+        <Modal
+          isOpen={true}
+          onClose={() => navigate("/home")} // 모달 닫기 시 홈으로 이동
+          message="이미 설문조사를 완료하셨습니다. 감사합니다!"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6 max-w-1/2 z-10">
