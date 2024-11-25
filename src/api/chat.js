@@ -1,47 +1,70 @@
-import { io } from "socket.io-client";
+const SOCKET_SERVER_URL = "ws://localhost:3000"; // WebSocket 서버 URL
 
-// 서버와 연결 설정
-const SOCKET_SERVER_URL = "http://localhost:5000"; // Socket.io 서버 URL
-const socket = io(SOCKET_SERVER_URL, {
-  transports: ["websocket"], // WebSocket을 우선적으로 사용
-  reconnection: true, // 연결 재시도 설정
-});
+let socket = null;
 
-// 파트너 ID 전달 및 실시간 통신 관리 함수
+/**
+ * WebSocket 초기화 및 이벤트 처리
+ * @param {string} userId - 현재 사용자 ID
+ * @param {string} partnerId - 상대방 사용자 ID
+ * @param {function} onMessage - 메시지 수신 시 호출되는 콜백 함수
+ * @param {function} onError - 연결 오류 발생 시 호출되는 콜백 함수
+ */
 export const initializeChat = (userId, partnerId, onMessage, onError) => {
-  // 연결 이벤트 처리
-  socket.on("connect", () => {
-    console.log("Socket connected:", socket.id);
+  socket = new WebSocket(SOCKET_SERVER_URL);
 
-    // 서버에 유저 정보 전달
-    socket.emit("joinChat", { userId, partnerId });
+  // 연결 성공
+  socket.onopen = () => {
+    console.log("WebSocket connected");
 
-    // 메시지 수신 이벤트 처리
-    socket.on("receiveMessage", (message) => {
-      if (onMessage) onMessage(message);
-    });
-  });
-
-  // 에러 이벤트 처리
-  socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error);
-    if (onError) onError(error);
-  });
-
-  // 연결 해제 이벤트 처리
-  socket.on("disconnect", (reason) => {
-    console.log("Socket disconnected:", reason);
-  });
-
-  // 메시지 전송 함수
-  const sendMessage = (message) => {
-    socket.emit("sendMessage", message);
+    // 서버에 채팅방 참여 메시지 전송
+    const joinMessage = {
+      type: "joinChat",
+      userId,
+      partnerId,
+    };
+    socket.send(JSON.stringify(joinMessage));
   };
 
-  // 연결 종료 함수
-  const disconnect = () => {
-    socket.disconnect();
+  // 메시지 수신
+  socket.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data);
+      if (onMessage) onMessage(message); // 수신된 메시지 콜백 실행
+    } catch (error) {
+      console.error("Error parsing message:", event.data);
+    }
   };
 
-  return { sendMessage, disconnect };
+  // 오류 발생
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+    if (onError) onError(error); // 오류 콜백 실행
+  };
+
+  // 연결 해제
+  socket.onclose = (event) => {
+    console.log("WebSocket disconnected:", event.reason);
+  };
+};
+
+/**
+ * 메시지 전송
+ * @param {Object} message - 전송할 메시지 데이터
+ */
+export const sendMessage = (message) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "sendMessage", ...message }));
+  } else {
+    console.error("WebSocket is not connected.");
+  }
+};
+
+/**
+ * WebSocket 연결 해제
+ */
+export const disconnect = () => {
+  if (socket) {
+    socket.close();
+    console.log("WebSocket connection closed.");
+  }
 };

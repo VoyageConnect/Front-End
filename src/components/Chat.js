@@ -1,105 +1,85 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { initializeChat } from "../api/chat";
+import { initializeChat, sendMessage, disconnect } from "../api/chat";
 
-const Chat = ({ userId, partnerId }) => {
+const Chat = ({ userId, partnerId, chatRoomId }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [chatConnection, setChatConnection] = useState(null); // Socket.io 연결 인스턴스
-  const [isChatting, setIsChatting] = useState(false); // 초기 상태는 false로 설정
+  const [isChatting, setIsChatting] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
-  const [score, setScore] = useState(null); // 매칭된 score를 저장할 상태
   const navigate = useNavigate();
 
+  // WebSocket 연결 초기화
   useEffect(() => {
-    const initializeSocket = () => {
-      const connection = initializeChat(
-        userId,
-        partnerId,
-        (newMessage) => {
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-        },
-        (error) => {
-          console.error("Socket connection error:", error);
-          navigate("/match"); // 에러 발생 시 매칭 페이지로 리다이렉트
-        }
-      );
-      setChatConnection(connection);
+    const onMessage = (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
-    initializeSocket();
+    const onError = (error) => {
+      console.error("WebSocket error:", error);
+      navigate("/match"); // 에러 발생 시 매칭 페이지로 이동
+    };
 
+    initializeChat(userId, partnerId, onMessage, onError);
+
+    // 컴포넌트 언마운트 시 연결 해제
     return () => {
-      if (chatConnection) chatConnection.disconnect();
+      disconnect();
     };
   }, [userId, partnerId, navigate]);
 
-  // 메시지 전송 함수
-  const sendMessage = () => {
-    if (chatConnection && inputMessage.trim()) {
+  // 메시지 전송 핸들러
+  const handleSendMessage = useCallback(() => {
+    if (inputMessage.trim()) {
       const messageData = {
-        sender_id: userId,
-        message: inputMessage,
+        chatRoomId,
+        senderId: userId,
+        content: inputMessage,
       };
-      chatConnection.sendMessage(messageData);
+
+      sendMessage(messageData);
       setMessages((prevMessages) => [...prevMessages, messageData]);
       setInputMessage("");
     }
-  };
+  }, [inputMessage, userId, chatRoomId]);
 
   // Enter 키로 메시지 전송
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      sendMessage();
-    }
+    if (e.key === "Enter") handleSendMessage();
   };
 
-  // "동행하기" 버튼을 눌렀을 때 호출되는 함수
+  // "동행하기" 버튼 핸들러
   const handleContinueCompanion = () => {
     setPopupVisible(false);
-    setIsChatting(true); // "동행 종료" 버튼이 보이도록 설정
+    setIsChatting(true);
   };
 
-  // "동행 종료" 버튼을 눌렀을 때 호출되는 함수
+  // "동행 종료" 버튼 핸들러
   const handleEndCompanion = () => {
-    navigate("/post/create"); // Post.js로 이동
+    navigate("/post/create");
   };
 
+  // 팝업 5초 후 자동 표시
   useEffect(() => {
-    // 5초 후에 팝업 표시
-    setTimeout(() => {
-      setPopupVisible(true);
-    }, 5000);
+    const popupTimer = setTimeout(() => setPopupVisible(true), 5000);
+    return () => clearTimeout(popupTimer);
   }, []);
 
   return (
-    <div className="chat-container">
-      <h2>채팅</h2>
-      {score && <p>매칭 점수: {score}</p>} {/* score 표시 */}
+    <div className="chat-container" style={styles.container}>
+      <h2 style={styles.header}>채팅</h2>
       <ChatRoom
         messages={messages}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
-        sendMessage={sendMessage}
+        sendMessage={handleSendMessage}
         handleKeyPress={handleKeyPress}
         disableChat={!isChatting}
-        userId={userId} // userId를 props로 전달
+        userId={userId}
       />
       {popupVisible && <CompanyPopup onClose={handleContinueCompanion} />}
       {isChatting && (
-        <button
-          className="end-companion-btn"
-          onClick={handleEndCompanion}
-          style={{
-            marginTop: "10px",
-            padding: "10px",
-            borderRadius: "5px",
-            backgroundColor: "#ff4d4f",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
+        <button style={styles.endButton} onClick={handleEndCompanion}>
           동행 종료
         </button>
       )}
@@ -107,110 +87,45 @@ const Chat = ({ userId, partnerId }) => {
   );
 };
 
-export default Chat;
-
-// ChatRoom 컴포넌트
 const ChatRoom = ({
   messages,
   inputMessage,
   setInputMessage,
   sendMessage,
-  handleKeyPress, // Enter 키 핸들러 추가
+  handleKeyPress,
   disableChat,
   userId,
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "80vh",
-        maxWidth: "500px",
-        margin: "auto",
-        border: "1px solid #e0e0e0",
-        borderRadius: "15px",
-        overflow: "hidden",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          padding: "10px",
-          overflowY: "scroll",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          backgroundColor: "#f5f5f7",
-        }}
-      >
+    <div style={styles.chatRoom}>
+      <div style={styles.messages}>
         {messages.map((msg, index) => (
           <div
             key={index}
             style={{
-              display: "flex",
-              justifyContent:
-                msg.sender_id === userId ? "flex-end" : "flex-start",
+              ...styles.message,
+              alignSelf: msg.senderId === userId ? "flex-end" : "flex-start",
+              backgroundColor: msg.senderId === userId ? "#DCF8C6" : "#ffffff",
             }}
           >
-            <div
-              style={{
-                maxWidth: "70%",
-                padding: "10px",
-                borderRadius: "10px",
-                backgroundColor:
-                  msg.sender_id === userId ? "#DCF8C6" : "#ffffff",
-                color: "#000",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
-                overflowWrap: "break-word",
-              }}
-            >
-              {msg.message}
-            </div>
+            {msg.content}
           </div>
         ))}
       </div>
-      <div
-        style={{
-          display: "flex",
-          padding: "10px",
-          borderTop: "1px solid #e0e0e0",
-        }}
-      >
+      <div style={styles.inputArea}>
         <input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={handleKeyPress} // Enter 키 핸들러 추가
+          onKeyPress={handleKeyPress}
           placeholder="메시지를 입력하세요"
           disabled={disableChat}
-          style={{
-            flex: 1,
-            height: "45px",
-            padding: "0 15px",
-            borderRadius: "20px",
-            border: "1px solid #e0e0e0",
-            outline: "none",
-            fontSize: "16px",
-          }}
+          style={styles.input}
         />
         <button
           onClick={sendMessage}
           disabled={disableChat}
-          style={{
-            marginLeft: "10px",
-            height: "45px",
-            padding: "0 15px",
-            borderRadius: "20px",
-            backgroundColor: "#34b7f1",
-            color: "#fff",
-            border: "none",
-            fontSize: "14px",
-            cursor: "pointer",
-            width: "60px",
-          }}
+          style={styles.sendButton}
         >
           전송
         </button>
@@ -219,65 +134,133 @@ const ChatRoom = ({
   );
 };
 
-// CompanyPopup 컴포넌트
-function CompanyPopup({ onClose }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        top: 0,
-        left: 0,
-        zIndex: 100,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "30px",
-          borderRadius: "15px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
-          minWidth: "400px",
-          maxWidth: "500px",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            textAlign: "center",
-          }}
+const CompanyPopup = ({ onClose }) => (
+  <div style={styles.popupBackground}>
+    <div style={styles.popup}>
+      <h3 style={styles.popupHeader}>동행을 하시겠습니까?</h3>
+      <div style={styles.popupButtons}>
+        <button style={styles.popupButton} onClick={onClose}>
+          동행하기
+        </button>
+        <button
+          style={styles.popupButton}
+          onClick={() => (window.location.href = "/home")}
         >
-          동행을 하시겠습니까?
-        </h3>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "15px",
-          }}
-        >
-          <button
-            style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={onClose}
-          >
-            동행하기
-          </button>
-          <button
-            style={{ flex: 1, padding: "10px", fontSize: "1rem" }}
-            onClick={() => (window.location.href = "/home")}
-          >
-            그만하기
-          </button>
-        </div>
+          그만하기
+        </button>
       </div>
     </div>
-  );
-}
+  </div>
+);
+
+// 스타일 객체
+const styles = {
+  container: {
+    padding: "20px",
+    fontFamily: "Arial, sans-serif",
+    maxWidth: "600px",
+    margin: "auto",
+  },
+  header: {
+    textAlign: "center",
+    marginBottom: "10px",
+  },
+  chatRoom: {
+    display: "flex",
+    flexDirection: "column",
+    height: "80vh",
+    border: "1px solid #e0e0e0",
+    borderRadius: "15px",
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+    overflow: "hidden",
+  },
+  messages: {
+    flex: 1,
+    padding: "10px",
+    overflowY: "scroll",
+    backgroundColor: "#f5f5f7",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  message: {
+    maxWidth: "70%",
+    padding: "10px",
+    borderRadius: "10px",
+    color: "#000",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+    wordBreak: "break-word",
+  },
+  inputArea: {
+    display: "flex",
+    padding: "10px",
+    borderTop: "1px solid #e0e0e0",
+  },
+  input: {
+    flex: 1,
+    padding: "10px",
+    borderRadius: "20px",
+    border: "1px solid #e0e0e0",
+    outline: "none",
+    fontSize: "16px",
+  },
+  sendButton: {
+    marginLeft: "10px",
+    padding: "10px 20px",
+    borderRadius: "20px",
+    backgroundColor: "#34b7f1",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+  },
+  endButton: {
+    marginTop: "10px",
+    padding: "10px",
+    borderRadius: "5px",
+    backgroundColor: "#ff4d4f",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+  },
+  popupBackground: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  popup: {
+    backgroundColor: "#fff",
+    padding: "20px",
+    borderRadius: "15px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "15px",
+  },
+  popupHeader: {
+    fontSize: "18px",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  popupButtons: {
+    display: "flex",
+    gap: "10px",
+  },
+  popupButton: {
+    padding: "10px 20px",
+    borderRadius: "5px",
+    backgroundColor: "#34b7f1",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+};
+
+export default Chat;
