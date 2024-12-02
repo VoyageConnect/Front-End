@@ -16,6 +16,14 @@ const LoginPage = () => {
     });
   };
 
+  // 사용자 토큰 확인 로그
+  const token = window.Kakao.Auth.getAccessToken();
+  if (token) {
+    console.log("Kakao Access Token:", token);
+  } else {
+    console.log("Kakao Access Token이 아직 발급되지 않았습니다.");
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 relative">
       <img

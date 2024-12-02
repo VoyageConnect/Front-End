@@ -1,21 +1,23 @@
 import axios from "axios";
 
-// .env 파일에서 API URL 가져오기
-const BASE_URL = process.env.REACT_APP_API_URL; // 환경 변수에서 URL 가져오기
+const BASE_URL = process.env.REACT_APP_API_URL;
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL, // 환경 변수로 변경
+  baseURL: BASE_URL,
 });
 
-console.log("Base URL:", process.env.REACT_APP_API_URL); // baseURL 값 확인
-
+// 인터셉터 설정
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // JWT 토큰 가져오기
-    console.log("Token:", token); // 토큰이 null이 아닌지 확인
+    const token = localStorage.getItem("token");
+
     if (token) {
+      console.log("Token found in localStorage:", token);
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn("No token found in localStorage. Request may fail.");
     }
+
     return config;
   },
   (error) => {

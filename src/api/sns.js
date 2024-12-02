@@ -9,6 +9,6 @@ export const fetchFeeds = async (region) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching feeds:", error);
-    throw new Error("피드를 불러오는 중 오류가 발생했습니다.");
+    throw new Error("");
   }
 };

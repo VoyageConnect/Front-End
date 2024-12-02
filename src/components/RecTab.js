@@ -6,6 +6,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode"; // jwt-decode 라이브러리 임포트
 
 const RecTab = () => {
   const [map, setMap] = useState(null);
@@ -15,6 +16,13 @@ const RecTab = () => {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+
+  // JWT 토큰에서 userId 추출
+  const jwtToken = localStorage.getItem("token");
+  const userId = jwtToken ? jwtDecode(jwtToken).sub : "unknown";
+
+  console.log("JWT Token:", jwtToken);
+  console.log("Decoded UserId (sub):", userId);
 
   // Google Maps API 로드
   const { isLoaded } = useJsApiLoader({
@@ -59,10 +67,8 @@ const RecTab = () => {
         setLoadingRecommendations(true);
         setError("");
         try {
-          // user_id 값을 적절히 설정하세요.
-          const userId = "example_user_id"; // 실제 user_id로 변경 필요
           const response = await axios.post("http://localhost:5000/recommend", {
-            user_id: userId,
+            user_id: userId, // JWT에서 추출한 userId 사용
             latitude: userLocation.latitude,
             longitude: userLocation.longitude,
           });
@@ -88,7 +94,7 @@ const RecTab = () => {
     };
 
     fetchRecommendations();
-  }, [userLocation]);
+  }, [userLocation, userId]); // userId를 의존성에 추가
 
   return isLoaded ? (
     <div className="flex">

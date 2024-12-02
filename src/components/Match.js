@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode"; // Named import 사용
 import Icon from "./image/icon.png";
 import { postMatch } from "../api/match";
 import Chat from "./Chat"; // Chat 컴포넌트 임포트 확인
@@ -14,65 +15,79 @@ const STEPS = {
 
 const Match = () => {
   const [step, setStep] = useState(STEPS.INIT);
-  const [latitude, setLatitude] = useState(0);
-  const [longitude, setLongitude] = useState(0);
+  const [latitude, setLatitude] = useState(null); // 초기값을 null로 설정
+  const [longitude, setLongitude] = useState(null); // 초기값을 null로 설정
   const [retry, setRetry] = useState(0);
   const [distance, setDistance] = useState(3);
   const [status, setStatus] = useState("매칭 중...");
   const [mapZoom, setMapZoom] = useState(14);
   const [partnerId, setPartnerId] = useState(null);
   const [popupData, setPopupData] = useState(null); // 팝업에 보여줄 데이터
+  const [locationError, setLocationError] = useState("");
   const navigate = useNavigate();
 
-  const userId = localStorage.getItem("userId"); // 로그인 시 저장된 userId 가져오기
+  const jwtToken = localStorage.getItem("token");
+  const userId = jwtToken ? jwtDecode(jwtToken).sub : "unknown";
 
-  // 현재 위치를 가져오는 함수
+  console.log("JWT Token:", jwtToken);
+  console.log("Decoded UserId (sub):", userId);
+
   const fetchCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLatitude(position.coords.latitude);
-          setLongitude(position.coords.longitude);
-        },
-        (error) => {
-          console.error("위치 정보를 가져오지 못했습니다.", error);
-          alert("위치 정보를 사용할 수 없습니다. 권한을 확인해주세요.");
-        },
-        { enableHighAccuracy: true }
-      );
-    } else {
-      alert("위치 정보를 지원하지 않는 브라우저입니다.");
-    }
+    return new Promise((resolve, reject) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLatitude(position.coords.latitude);
+            setLongitude(position.coords.longitude);
+            resolve(); // 위치 설정 완료
+          },
+          (err) => {
+            setLatitude(37.5665); // 기본 위치 (서울 시청)
+            setLongitude(126.978);
+            setLocationError(
+              "위치 정보를 가져올 수 없습니다. 기본 위치를 사용합니다."
+            );
+            console.error("Geolocation error:", err);
+            resolve(); // 기본값으로 진행
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        setLatitude(37.5665);
+        setLongitude(126.978);
+        setLocationError(
+          "Geolocation이 지원되지 않습니다. 기본 위치를 사용합니다."
+        );
+        resolve();
+      }
+    });
   };
 
   const startMatching = async () => {
-    await new Promise((resolve, reject) => {
-      fetchCurrentLocation();
-      // 위치 정보 업데이트 후 500ms 기다림 (대안: 정확한 완료 핸들링)
-      setTimeout(() => {
-        if (latitude !== 0 && longitude !== 0) {
-          resolve();
-        } else {
-          reject(new Error("위치 정보를 가져오지 못했습니다."));
-        }
-      }, 500);
-    }).catch((error) => {
-      console.error(error.message);
-      alert("위치 정보를 가져오지 못했습니다. 다시 시도해주세요.");
-      return;
-    });
+    try {
+      await fetchCurrentLocation(); // 위치 정보가 완전히 설정될 때까지 기다림
 
-    setStep(STEPS.LOADING);
-    handleMatch();
+      if (!latitude || !longitude) {
+        setLocationError(
+          "위치 정보를 가져오지 못했습니다. 다시 시도해 주세요."
+        );
+        return;
+      }
+
+      setStep(STEPS.LOADING);
+      handleMatch();
+    } catch (err) {
+      console.error("Error during startMatching:", err);
+    }
   };
 
-  const handleMatch = async () => {
+  const handleMatch = useCallback(async () => {
     try {
       const result = await postMatch(latitude, longitude, retry, userId);
       if (result.result === "success") {
         setStatus("매칭 성공!");
         setPopupData({ score: result.score, description: result.description });
-        setStep(STEPS.SHOW_POPUP); // 팝업 상태로 전환
+        setStep(STEPS.SHOW_POPUP);
         setPartnerId(result.partnerId);
 
         // 7초 후 팝업을 숨기고 채팅 화면으로 이동
@@ -80,7 +95,7 @@ const Match = () => {
           setStep(STEPS.CHATTING);
         }, 7000);
       } else {
-        setRetry(retry + 1);
+        setRetry((prevRetry) => prevRetry + 1);
         if (distance === 3) {
           setDistance(5);
           setMapZoom(12);
@@ -91,17 +106,17 @@ const Match = () => {
           navigate("/home");
         }
       }
-    } catch (error) {
-      setStatus("매칭 중 오류가 발생했습니다. 다시 시도해주세요.");
-      console.error("매칭 오류:", error);
+    } catch (err) {
+      console.error("매칭 중 오류 발생:", err);
+      setStatus("매칭 실패. 다시 시도해 주세요.");
     }
-  };
+  }, [latitude, longitude, retry, userId, distance, navigate]);
 
   useEffect(() => {
     if (step === STEPS.LOADING && distance <= 10) {
       handleMatch();
     }
-  }, [distance, step]);
+  }, [distance, step, handleMatch]);
 
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-r from-[#6a11cb] to-[#2575fc] relative">
@@ -113,6 +128,7 @@ const Match = () => {
       <div className="bg-white p-10 rounded-lg shadow-lg text-center w-1/3 z-10">
         <h1 className="text-4xl font-bold text-gray-800 mb-6">랜덤 매칭</h1>
         <p className="text-gray-600 mb-4">새로운 친구와 대화를 나눠 보세요!</p>
+        {locationError && <p className="text-red-500">{locationError}</p>}
         {step === STEPS.INIT && (
           <button
             className="bg-blue-600 text-white px-8 py-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
@@ -136,12 +152,18 @@ const Match = () => {
         )}
         {step === STEPS.SHOW_POPUP && popupData && (
           <div className="bg-gray-800 bg-opacity-75 p-6 rounded-lg text-white absolute inset-0 flex flex-col items-center justify-center">
-            <h2 className="text-3xl font-bold mb-4">매칭 성공!</h2>
-            <p className="text-lg">점수: {popupData.score}</p>
-            <p className="text-lg mb-4">설명: {popupData.description}</p>
-            <p className="text-sm text-gray-300">
-              잠시 후 채팅 화면으로 이동합니다...
-            </p>
+            <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+              <h2 className="text-3xl font-bold mb-4 text-gray-800">
+                매칭 성공!
+              </h2>
+              <p className="text-lg text-gray-700">점수: {popupData.score}</p>
+              <p className="text-lg mb-4 text-gray-700">
+                설명: {popupData.description}
+              </p>
+              <p className="text-sm text-gray-500">
+                잠시 후 채팅 화면으로 이동합니다...
+              </p>
+            </div>
           </div>
         )}
         {step === STEPS.CHATTING && partnerId && (
@@ -155,7 +177,6 @@ const Match = () => {
 const MapComponent = ({ latitude, longitude, zoom }) => {
   useEffect(() => {
     if (!window.google) {
-      console.error("Google Maps API가 로드되지 않았습니다.");
       return;
     }
 
@@ -178,7 +199,6 @@ const MapComponent = ({ latitude, longitude, zoom }) => {
   return <div id="map" style={{ width: "100%", height: "100%" }} />;
 };
 
-// MapComponent의 PropTypes 정의
 MapComponent.propTypes = {
   latitude: PropTypes.number.isRequired,
   longitude: PropTypes.number.isRequired,
