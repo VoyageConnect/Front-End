@@ -73,7 +73,7 @@ const Sns = () => {
     <div className="container">
       <h1 className="title">{data.title}</h1>
       <img src={data.imageUrl} alt={region} className="image" />
-      {error && <p className="error">{error}</p>}
+      {false && <p className="error">{error}</p>}
       <div className="feed-grid">
         {feeds.length > 0 ? (
           feeds.map((feed, index) => (

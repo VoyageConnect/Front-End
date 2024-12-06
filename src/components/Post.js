@@ -7,7 +7,6 @@ const Post = () => {
   const [cityName, setCityName] = useState("");
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null); // 미리보기 URL 상태 추가
-  const [error, setError] = useState("");
   const navigate = useNavigate(); // useNavigate 인스턴스 생성
 
   // 사용자의 현재 위치를 가져오고, Google Maps API를 통해 주소 변환
@@ -51,27 +50,17 @@ const Post = () => {
                   if (province && city) {
                     setProvinceName(province);
                     setCityName(city);
-                  } else {
-                    setError("도시 정보를 가져올 수 없습니다.");
                   }
-                } else {
-                  setError("API 요청이 실패했습니다.");
                 }
               })
-              .catch((error) => {
-                console.error("Error fetching data:", error);
-                setError("위치 데이터를 가져오는 중 오류가 발생했습니다.");
+              .catch(() => {
+                // 위치 데이터를 가져오는 중 오류가 발생했을 때 아무 동작도 하지 않음
               });
           },
-          (error) => {
-            console.error("Error fetching geolocation:", error);
-            setError(
-              "위치를 가져오는 데 실패했습니다. 위치 서비스를 활성화하세요."
-            );
+          () => {
+            // 위치를 가져오는 데 실패했을 때 아무 동작도 하지 않음
           }
         );
-      } else {
-        setError("Geolocation을 지원하지 않는 브라우저입니다.");
       }
     };
 
@@ -90,7 +79,6 @@ const Post = () => {
     e.preventDefault();
 
     if (!provinceName || !cityName || !file) {
-      setError("모든 정보를 입력하세요.");
       return;
     }
 
@@ -100,14 +88,12 @@ const Post = () => {
       navigate("/home"); // 성공 시 Home 페이지로 이동
     } catch (error) {
       console.error("게시글 등록 실패:", error);
-      setError("게시글 작성 중 오류가 발생했습니다. 다시 시도해주세요.");
     }
   };
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">게시글 등록</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
